@@ -14,6 +14,7 @@ import (
 	"github.com/sunshineplan/capital-flows-data/sector"
 	"github.com/sunshineplan/utils/database/mongodb"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var config = mongodb.Config{
@@ -25,25 +26,34 @@ var config = mongodb.Config{
 }
 
 var path string
+var collection *mongo.Collection
 
 func main() {
 	flag.StringVar(&config.Server, "mongo", "", "MongoDB Server")
 	flag.StringVar(&path, "path", "", "data path")
 	flag.Parse()
 
+	if err := connect(); err != nil {
+		log.Fatal(err)
+	}
+
 	if err := backup(); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func backup() error {
+func connect() error {
 	client, err := config.Open()
 	if err != nil {
 		return err
 	}
 
-	collection := client.Database(config.Database).Collection(config.Collection)
+	collection = client.Database(config.Database).Collection(config.Collection)
 
+	return nil
+}
+
+func backup() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -83,11 +93,27 @@ func backup() error {
 				return err
 			}
 
-			if err := os.WriteFile(fullpath, b, 0744); err != nil {
+			if err := os.WriteFile(fullpath+".json", b, 0744); err != nil {
 				return err
+			}
+
+			d, _ := time.ParseInLocation("2006-01-02", i.Date, tz)
+			if t.Sub(d).Hours() > 7*24 {
+				if err := delete(i.Date); err != nil {
+					return err
+				}
 			}
 		}
 	}
 
 	return nil
+}
+
+func delete(date string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	_, err := collection.DeleteMany(ctx, bson.M{"date": date})
+
+	return err
 }
