@@ -79,11 +79,11 @@ func backup() error {
 			}
 
 			fullpath := filepath.Join(append([]string{path}, strings.Split(i.Date, "-")...)...)
-			if err := os.MkdirAll(filepath.Dir(fullpath), 0666); err != nil {
+			if err := os.MkdirAll(filepath.Dir(fullpath), 0744); err != nil {
 				return err
 			}
 
-			if err := os.WriteFile(fullpath, b, 0666); err != nil {
+			if err := os.WriteFile(fullpath, b, 0744); err != nil {
 				return err
 			}
 		}
