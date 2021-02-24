@@ -63,11 +63,7 @@ func query(date string, xy bool, collection *mongo.Collection) (interface{}, err
 
 	var res []TimeLine
 	for _, i := range charts {
-		var timeline []map[string]int64
-		for _, point := range i.Chart {
-			timeline = append(timeline, map[string]int64{point.X: point.Y})
-		}
-		res = append(res, TimeLine{Sector: i.Sector, TimeLine: timeline})
+		res = append(res, Chart2TimeLine(i))
 	}
 
 	return res, nil
@@ -85,4 +81,32 @@ func GetChart(date string, collection *mongo.Collection) ([]Chart, error) {
 	res, err := query(date, true, collection)
 
 	return res.([]Chart), err
+}
+
+// Chart2TimeLine convert Chart to TimeLine.
+func Chart2TimeLine(chart Chart) TimeLine {
+	var data []map[string]int64
+	for _, point := range chart.Chart {
+		data = append(data, map[string]int64{point.X: point.Y})
+	}
+
+	return TimeLine{Sector: chart.Sector, TimeLine: data}
+}
+
+// TimeLine2Chart convert TimeLine to Chart.
+func TimeLine2Chart(timeline TimeLine) Chart {
+	var data []struct {
+		X string `json:"x"`
+		Y int64  `json:"y"`
+	}
+	for _, i := range timeline.TimeLine {
+		for k, v := range i {
+			data = append(data, struct {
+				X string `json:"x"`
+				Y int64  `json:"y"`
+			}{X: k, Y: v})
+		}
+	}
+
+	return Chart{Sector: timeline.Sector, Chart: data}
 }
