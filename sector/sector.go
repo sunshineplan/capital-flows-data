@@ -4,9 +4,15 @@ import (
 	"context"
 	"time"
 
-	"github.com/sunshineplan/utils/database/mongodb"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
+
+// TimeLine contains one day timeline data.
+type TimeLine struct {
+	Sector   string `json:"sector" bson:"_id"`
+	TimeLine []map[string]int64
+}
 
 // Chart contains one day chart data.
 type Chart struct {
@@ -17,19 +23,7 @@ type Chart struct {
 	} `json:"chart"`
 }
 
-// Query all sectors chart data of one day.
-func Query(mongo mongodb.Config, date string) ([]Chart, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	client, err := mongo.Open()
-	if err != nil {
-		return nil, err
-	}
-	defer client.Disconnect(ctx)
-
-	collection := client.Database(mongo.Database).Collection(mongo.Collection)
-
+func query(date string, xy bool, collection *mongo.Collection) (interface{}, error) {
 	var pipeline []interface{}
 	pipeline = append(pipeline, bson.M{"$match": bson.M{"date": date}})
 	pipeline = append(pipeline, bson.M{"$project": bson.M{"time": 1, "flows": bson.M{"$objectToArray": "$flows"}}})
@@ -47,16 +41,48 @@ func Query(mongo mongodb.Config, date string) ([]Chart, error) {
 	)
 	pipeline = append(pipeline, bson.M{"$sort": bson.M{"_id": 1}})
 
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	cur, err := collection.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, err
 	}
-	defer cur.Close(ctx)
 
-	var res []Chart
-	if err := cur.All(ctx, &res); err != nil {
+	ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var charts []Chart
+	if err := cur.All(ctx, &charts); err != nil {
 		return nil, err
 	}
 
+	if xy {
+		return charts, nil
+	}
+
+	var res []TimeLine
+	for _, i := range charts {
+		var timeline []map[string]int64
+		for _, point := range i.Chart {
+			timeline = append(timeline, map[string]int64{point.X: point.Y})
+		}
+		res = append(res, TimeLine{Sector: i.Sector, TimeLine: timeline})
+	}
+
 	return res, nil
+}
+
+// GetTimeLine gets all sectors timeline data of one day.
+func GetTimeLine(date string, collection *mongo.Collection) ([]TimeLine, error) {
+	res, err := query(date, false, collection)
+
+	return res.([]TimeLine), err
+}
+
+// GetChart gets all sectors chart data of one day.
+func GetChart(date string, collection *mongo.Collection) ([]Chart, error) {
+	res, err := query(date, true, collection)
+
+	return res.([]Chart), err
 }

@@ -74,8 +74,8 @@ github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXf
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.6.1 h1:hDPOHmpOpP40lSULcqw7IrRb/u7w6RpDC9399XyoNd0=
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
-github.com/sunshineplan/utils v0.0.0-20210221021839-d11804e9bdb9 h1:EZ2mAWruM7atsHke6W1yY3OeiJ3tfyyqiI6Akh4zEUw=
-github.com/sunshineplan/utils v0.0.0-20210221021839-d11804e9bdb9/go.mod h1:fJ8/Fjbd50RwQ8/wxBmBgkuDHfcXrCJu6c/iRsgkYok=
+github.com/sunshineplan/utils v0.0.0-20210224010154-f102cd242d60 h1:LvoK/LS6Vu/yu0mkjanIQEEGCBwkmyPWNv/NtpM9zdk=
+github.com/sunshineplan/utils v0.0.0-20210224010154-f102cd242d60/go.mod h1:fJ8/Fjbd50RwQ8/wxBmBgkuDHfcXrCJu6c/iRsgkYok=
 github.com/tidwall/pretty v1.0.0 h1:HsD+QiTn7sK6flMKIvNmpqz1qrpP3Ps6jOKIKMooyg4=
 github.com/tidwall/pretty v1.0.0/go.mod h1:XNkn88O1ChpSDQmQeStsy+sBenx6DDtFZJxhVysOjyk=
 github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c h1:u40Z8hqBAAQyv+vATcGgV0YCnDjqSL7/q/JyPhhJSPk=
