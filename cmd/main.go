@@ -62,7 +62,8 @@ func backup() error {
 		return err
 	}
 
-	t := time.Now()
+	tz, _ := time.LoadLocation("Asia/Shanghai")
+	t := time.Now().In(tz)
 	today := fmt.Sprintf("%d-%02d-%02d", t.Year(), t.Month(), t.Day())
 
 	for _, i := range date {
