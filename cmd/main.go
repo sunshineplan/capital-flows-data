@@ -107,7 +107,9 @@ func commit() error {
 			defer cancel()
 
 			if _, _, err := client.Repositories.CreateFile(ctx, repo[0], repo[1], fullpath, opt); err != nil {
-				return err
+				if !strings.Contains(err.Error(), `"sha" wasn't supplied.`) {
+					return err
+				}
 			}
 
 			d, _ := time.ParseInLocation("2006-01-02", i.Date, tz)
