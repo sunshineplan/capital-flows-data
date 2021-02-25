@@ -72,15 +72,21 @@ func query(date string, xy bool, collection *mongo.Collection) (interface{}, err
 // GetTimeLine gets all sectors timeline data of one day.
 func GetTimeLine(date string, collection *mongo.Collection) ([]TimeLine, error) {
 	res, err := query(date, false, collection)
+	if err != nil {
+		return nil, err
+	}
 
-	return res.([]TimeLine), err
+	return res.([]TimeLine), nil
 }
 
 // GetChart gets all sectors chart data of one day.
 func GetChart(date string, collection *mongo.Collection) ([]Chart, error) {
 	res, err := query(date, true, collection)
+	if err != nil {
+		return nil, err
+	}
 
-	return res.([]Chart), err
+	return res.([]Chart), nil
 }
 
 // Chart2TimeLine convert Chart to TimeLine.
