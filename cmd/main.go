@@ -6,15 +6,16 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/google/go-github/github"
 	"github.com/sunshineplan/capital-flows-data/sector"
 	"github.com/sunshineplan/utils/database/mongodb"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/oauth2"
 )
 
 var config = mongodb.Config{
@@ -25,11 +26,14 @@ var config = mongodb.Config{
 	SRV:        true,
 }
 
+var token, repository string
 var path string
 var collection *mongo.Collection
 
 func main() {
 	flag.StringVar(&config.Server, "mongo", "", "MongoDB Server")
+	flag.StringVar(&token, "token", "", "token")
+	flag.StringVar(&repository, "repo", "", "repository")
 	flag.StringVar(&path, "path", "", "data path")
 	flag.Parse()
 
@@ -37,7 +41,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if err := backup(); err != nil {
+	if err := commit(); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -53,7 +57,7 @@ func connect() error {
 	return nil
 }
 
-func backup() error {
+func commit() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -76,6 +80,8 @@ func backup() error {
 	t := time.Now().In(tz)
 	today := fmt.Sprintf("%d-%02d-%02d", t.Year(), t.Month(), t.Day())
 
+	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
+
 	for _, i := range date {
 		if i.Date != today {
 			res, err := sector.GetTimeLine(i.Date, collection)
@@ -88,12 +94,19 @@ func backup() error {
 				return err
 			}
 
-			fullpath := filepath.Join(append([]string{path}, strings.Split(i.Date, "-")...)...)
-			if err := os.MkdirAll(filepath.Dir(fullpath), 0744); err != nil {
-				return err
+			tc := oauth2.NewClient(ctx, ts)
+			client := github.NewClient(tc)
+			repo := strings.Split(repository, "/")
+			fullpath := filepath.Join(append([]string{path}, strings.Split(i.Date, "-")...)...) + ".json"
+			opt := &github.RepositoryContentFileOptions{
+				Message: github.String(i.Date),
+				Content: b,
 			}
 
-			if err := os.WriteFile(fullpath+".json", b, 0744); err != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+
+			if _, _, err := client.Repositories.CreateFile(ctx, repo[0], repo[1], fullpath, opt); err != nil {
 				return err
 			}
 

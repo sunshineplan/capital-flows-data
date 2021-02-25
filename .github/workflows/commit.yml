@@ -8,20 +8,9 @@ jobs:
   commit:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          path: repo
-
       - name: Run
         run: |
           curl -LO https://github.com/sunshineplan/capital-flows-data/releases/download/v1.0/run
           sudo chmod +x run
           sudo ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
-          ./run -mongo ${{ secrets.MONGO }} -path repo/data
-          cd repo
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add .
-          git commit -m "$(TZ=CST date +'%Y-%m-%d')"
-          git push
+          ./run -mongo ${{ secrets.MONGO }} -token ${{ github.token }} -repo $GITHUB_REPOSITORY -path data
